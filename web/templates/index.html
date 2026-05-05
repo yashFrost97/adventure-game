@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TexAd Dungeon</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <div id="game">
+
+        <h1>⚔ TexAd Dungeon</h1>
+
+        <!-- Stats bar -->
+        <div id="stats">
+            <div class="stat">
+                <span class="label">YOUR HP</span>
+                <div class="bar-track">
+                    <div id="player-bar" class="bar player-bar"></div>
+                </div>
+                <span id="player-hp" class="stat-value"></span>
+            </div>
+            <div class="stat" id="enemy-stat">
+                <span class="label" id="enemy-label">ENEMY</span>
+                <div class="bar-track">
+                    <div id="enemy-bar" class="bar enemy-bar"></div>
+                </div>
+                <span id="enemy-hp" class="stat-value"></span>
+            </div>
+            <div class="stat">
+                <span class="label">POTIONS</span>
+                <span id="potions" class="stat-value big"></span>
+            </div>
+        </div>
+
+        <!-- Message log -->
+        <div id="log"></div>
+
+        <!-- Action buttons -->
+        <div id="actions">
+            <button class="btn" onclick="sendAction('1')">⚔ Attack</button>
+            <button class="btn" onclick="sendAction('2')">🧪 Drink Potion</button>
+            <button class="btn" id="btn-flee" onclick="sendAction('3')">🏃 Flee</button>
+        </div>
+
+        <!-- Game over / victory -->
+        <div id="endscreen" class="hidden">
+            <p id="end-message"></p>
+            <button class="btn" onclick="location.reload()">Play Again</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Render the initial state injected by Flask on page load
+        const initialState = {{ state | tojson }};
+        applyState(initialState);
+
+        async function sendAction(choice) {
+            const response = await fetch("/action", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ choice })
+            });
+            const state = await response.json();
+            applyState(state);
+        }
+
+        function applyState(state) {
+            // Update message log
+            const log = document.getElementById("log");
+            state.messages.forEach(msg => {
+                const p = document.createElement("p");
+                p.textContent = "> " + msg;
+                log.appendChild(p);
+            });
+            log.scrollTop = log.scrollHeight;
+
+            // Update player stats
+            const player = state.player;
+            const hpPct = Math.max(0, (player.health / player.max_health) * 100);
+            document.getElementById("player-bar").style.width = hpPct + "%";
+            document.getElementById("player-hp").textContent = player.health + " / " + player.max_health;
+            document.getElementById("potions").textContent = "🧪 x" + player.potions;
+
+            // Update enemy stats
+            const enemy = state.enemy;
+            if (enemy.name) {
+                document.getElementById("enemy-label").textContent = enemy.name.toUpperCase();
+                const enemyPct = Math.max(0, (enemy.health / enemy.max_health) * 100);
+                document.getElementById("enemy-bar").style.width = enemyPct + "%";
+                document.getElementById("enemy-hp").textContent = enemy.health + " / " + enemy.max_health;
+                document.getElementById("enemy-stat").classList.remove("hidden");
+            } else {
+                document.getElementById("enemy-stat").classList.add("hidden");
+            }
+
+            // Show/hide flee button (not available during boss fight)
+            document.getElementById("btn-flee").style.display =
+                state.phase === "enemy" ? "inline-block" : "none";
+
+            // Handle end states
+            if (state.phase === "victory" || state.phase === "game_over") {
+                document.getElementById("actions").classList.add("hidden");
+                document.getElementById("endscreen").classList.remove("hidden");
+                document.getElementById("end-message").textContent =
+                    state.phase === "victory" ? "🏆 YOU WIN!" : "💀 YOU DIED.";
+            }
+        }
+    </script>
+
+</body>
+</html>
