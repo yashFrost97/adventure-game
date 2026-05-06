@@ -1,6 +1,20 @@
 import { useState } from 'react'
 import './App.css'
 
+function GamePhase({phase}) {
+  const labels = {
+    enemy: "⚔ Enemy Encounter",
+    boss: "💀 Boss Fight",
+    victory: "🏆 Victory",
+    game_over: "☠ Game Over",
+  }
+  return (
+    <div className='stats'>
+      <p>{labels[phase] ?? phase}</p>
+    </div>
+  )
+}
+
 function PlayerStats({ player }) {
   return (
     <div className='stats'>
@@ -31,12 +45,13 @@ function MessageComponent({ messages }) {
   )
 }
 
-function ActionButtons({ onAction }) {
+function ActionButtons({ onAction, phase }) {
   return (
     <div className='actions'>
       <button onClick={() => onAction("1")} className='btn'>1. Attack</button>
       <button onClick={() => onAction("2")} className='btn'>2. Drink Potion</button>
-      <button onClick={() => onAction("3")} className='btn'>3. Flee!</button>
+      {phase !== "boss" && <button onClick={() => onAction("3")} className='btn'>3. Flee!</button>}
+      
     </div>
   )
 }
@@ -71,10 +86,19 @@ function App() {
       ) : (
         <div>
           <h1>Welcome to TexAd Dungeon!</h1>
+          <GamePhase phase={gameState.phase} />
           <PlayerStats player={gameState.player} />
           <EnemyStats enemy={gameState.enemy} />
           <MessageComponent messages={gameState.messages} />
-          <ActionButtons onAction={sendAction} />
+          {
+            gameState.phase === "enemy" || gameState.phase === "boss" ?
+            <ActionButtons onAction={sendAction} phase={gameState.phase} />  
+            : <div className='stats'>
+                <p>{gameState.phase === "victory" ? "You have saved Shadow's Watch! 🏆" : "Your soul has been claimed... ☠"}</p>
+                <button onClick={startGame} className='btn'> Start The Game! </button>
+              </div>
+          }
+          
         </div>
       )
     }
