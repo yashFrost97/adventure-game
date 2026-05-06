@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import './App.css'
 
 function PlayerStats({ player }) {
   return (
-    <div>
+    <div className='stats'>
       <p>Your HP: {player.health} / {player.max_health}</p>
       <p>Potions Available: {player.potions}</p>
     </div>
@@ -10,9 +11,9 @@ function PlayerStats({ player }) {
 }
 
 function EnemyStats({ enemy }) {
-  // add a null check for the enemy
+  if (!enemy.name) return null
   return (
-    <div>
+    <div className='stats'>
       <p>Enemy: {enemy.name}</p>
       <p>Enemy HP: {enemy.health} / {enemy.max_health}</p>
     </div>
@@ -21,7 +22,7 @@ function EnemyStats({ enemy }) {
 
 function MessageComponent({ messages }) {
   return (
-    <div>
+    <div className='messages'>
       <h3>Messages:</h3>
         {messages.map((msg, index) => (
           <p key={index}>{msg}</p>
@@ -32,10 +33,10 @@ function MessageComponent({ messages }) {
 
 function ActionButtons({ onAction }) {
   return (
-    <div>
-      <button onClick={() => onAction("1")}>1. Attack</button>
-      <button onClick={() => onAction("2")}>2. Drink Potion</button>
-      <button onClick={() => onAction("3")}>3. Flee!</button>
+    <div className='actions'>
+      <button onClick={() => onAction("1")} className='btn'>1. Attack</button>
+      <button onClick={() => onAction("2")} className='btn'>2. Drink Potion</button>
+      <button onClick={() => onAction("3")} className='btn'>3. Flee!</button>
     </div>
   )
 }
@@ -64,13 +65,12 @@ function App() {
   }
 
   return (
-    <div>
+    <div id="game">
       {gameState === null ? (
-        <button onClick={startGame}> Start The Game! </button>
+        <button onClick={startGame} className='btn'> Start The Game! </button>
       ) : (
         <div>
           <h1>Welcome to TexAd Dungeon!</h1>
-          <p>Phase: {gameState.phase}</p>
           <PlayerStats player={gameState.player} />
           <EnemyStats enemy={gameState.enemy} />
           <MessageComponent messages={gameState.messages} />
